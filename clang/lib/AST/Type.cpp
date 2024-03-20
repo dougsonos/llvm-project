@@ -4994,7 +4994,7 @@ bool FunctionEffect::diagnoseRedeclaration(bool Adding,
   return false;
 }
 
-bool FunctionEffect::diagnoseMethodOverride(bool Adding,
+FunctionEffect::OverrideResult FunctionEffect::diagnoseMethodOverride(bool Adding,
                                             const CXXMethodDecl &OldMethod,
                                             FunctionEffectSet OldFX,
                                             const CXXMethodDecl &NewMethod,
@@ -5004,11 +5004,11 @@ bool FunctionEffect::diagnoseMethodOverride(bool Adding,
   case Type::NoLockTrue:
     // nolock/noalloc can't be removed from an override
     // adding -> false, removing -> true (diagnose)
-    return !Adding;
+    return Adding ? OverrideResult::Propagate : OverrideResult::Ignore;
   default:
     break;
   }
-  return false;
+  return OverrideResult::Ignore;
 }
 
 bool FunctionEffect::canInferOnFunction(QualType QT,

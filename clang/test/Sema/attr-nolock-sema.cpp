@@ -60,17 +60,19 @@ void type_conversions()
 }
 
 // --- VIRTUAL METHODS ---
+// Attributes propagate to overridden methods, so no diagnostics.
+// Check this in the syntax tests too.
 #ifdef __cplusplus
 struct Base {
 	virtual void f1();
-	virtual void nolock() noexcept [[clang::nolock]]; // expected-note {{overridden virtual function is here}}
-	virtual void noalloc() noexcept [[clang::noalloc]]; // expected-note {{overridden virtual function is here}}
+	virtual void nolock() noexcept [[clang::nolock]];
+	virtual void noalloc() noexcept [[clang::noalloc]];
 };
 
 struct Derived : public Base {
 	void f1() [[clang::nolock]] override;
-	void nolock() noexcept override; // expected-warning {{attribute 'nolock' on overriding function does not match base version}}
-	void noalloc() noexcept override; // expected-warning {{attribute 'noalloc' on overriding function does not match base version}}
+	void nolock() noexcept override;
+	void noalloc() noexcept override;
 };
 #endif // __cplusplus
 

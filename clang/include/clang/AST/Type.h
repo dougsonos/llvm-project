@@ -4197,6 +4197,7 @@ class TypeSourceInfo;
 /// Represents an abstract function effect.
 class FunctionEffect {
 public:
+  /// Identifies the particular type of effect.
   enum class Type {
     None = 0,
     NoLockTrue,
@@ -4227,6 +4228,14 @@ public:
     FE_ExcludeObjCMessageSend = 0x20,
     FE_ExcludeStaticLocalVars = 0x40,
     FE_ExcludeThreadLocalVars = 0x80
+  };
+
+  /// Describes the result of effects differing between a base class's virtual method and
+  /// an overriding method in a subclass.
+  enum class OverrideResult {
+    Ignore,
+    Warn,
+    Propagate // Base method's effects are merged with those of the override.
   };
 
 private:
@@ -4275,7 +4284,7 @@ public:
 
   /// Return true if adding or removing the effect in a C++ virtual method
   /// override should generate a diagnostic.
-  bool diagnoseMethodOverride(bool Adding, const CXXMethodDecl &OldMethod,
+  OverrideResult diagnoseMethodOverride(bool Adding, const CXXMethodDecl &OldMethod,
                               FunctionEffectSet OldFX,
                               const CXXMethodDecl &NewMethod,
                               FunctionEffectSet NewFX) const;
