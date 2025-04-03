@@ -636,6 +636,10 @@ private:
   /// replay the unterminated assume_nonnull.
   SourceLocation PreambleRecordedPragmaAssumeNonNullLoc;
 
+  /// The source location of the currently-active
+  /// #\pragma clang assume_function_effects (foo, bar) begin.
+  std::pair<SmallVector<StringRef, 1>, SourceLocation> PragmaAssumeFunctionEffectsInfo;
+
   /// True if we hit the code-completion point.
   bool CodeCompletionReached = false;
 
@@ -2039,6 +2043,14 @@ public:
   /// assume_nonnull begin in the preamble.
   void setPreambleRecordedPragmaAssumeNonNullLoc(SourceLocation Loc) {
     PreambleRecordedPragmaAssumeNonNullLoc = Loc;
+  }
+
+  std::pair<SmallVector<StringRef, 1>, SourceLocation> getPragmaAssumeFunctionEffectsInfo() const {
+    return PragmaAssumeFunctionEffectsInfo;
+  }
+
+  void setPragmaAssumeFunctionEffectsInfo(ArrayRef<StringRef> AttrNames, SourceLocation Loc) {
+    PragmaAssumeFunctionEffectsInfo = { SmallVector<StringRef, 1>(AttrNames), Loc };
   }
 
   /// Set the directory in which the main file should be considered

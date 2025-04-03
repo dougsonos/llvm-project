@@ -1986,6 +1986,87 @@ struct PragmaAssumeNonNullHandler : public PragmaHandler {
   }
 };
 
+/// PragmaAssumeFunctionEffectsHandler
+///   \#pragma clang assume_function_effects begin attribute ...
+///   \#pragma clang assume_function_effects end
+/// Attrs are: nonblocking / blocking / allocating / nonallocating.
+struct PragmaAssumeFunctionEffectsHandler : public PragmaHandler {
+    PragmaAssumeFunctionEffectsHandler() : PragmaHandler("assume_function_effects") {}
+
+  void HandlePragma(Preprocessor &PP, PragmaIntroducer Introducer,
+                    Token &NameTok) override {
+    SourceLocation Loc = NameTok.getLocation();
+    bool IsBegin;
+    SmallVector<StringRef, 1> EffectAttributes;
+
+    Token Tok;
+
+    // Lex the 'begin' or 'end'.
+    PP.LexUnexpandedToken(Tok);
+    const IdentifierInfo *BeginEnd = Tok.getIdentifierInfo();
+    if (BeginEnd && BeginEnd->isStr("begin")) {
+      IsBegin = true;
+    } else if (BeginEnd && BeginEnd->isStr("end")) {
+      IsBegin = false;
+    } else {
+      // FIXME: Need our own error.
+      PP.Diag(Tok.getLocation(), diag::err_pp_assume_nonnull_syntax);
+      return;
+    }
+
+    PP.LexUnexpandedToken(Tok);
+    // If this is 'begin' then lex any number of attribute names.
+    if (IsBegin) {
+      while (Tok.isNot(tok::eod)) {
+        const IdentifierInfo *AttrName = Tok.getIdentifierInfo();
+        if (!AttrName) {
+          // FIXME: Need our own error.
+          PP.Diag(Tok.getLocation(), diag::err_pp_assume_nonnull_syntax);
+          return;
+        }
+        EffectAttributes.push_back(AttrName->getName());
+      }
+    }
+    
+    // Verify that this is followed by EOD.
+    if (Tok.isNot(tok::eod))
+      PP.Diag(Tok, diag::ext_pp_extra_tokens_at_eol) << "pragma";
+
+    // The start location of the active pragma.
+    SourceLocation BeginLoc = PP.getPragmaAssumeFunctionEffectsInfo().second;
+
+    // The start location we want after processing this.
+    SourceLocation NewLoc;
+    PPCallbacks *Callbacks = PP.getPPCallbacks();
+
+    if (IsBegin) {
+      // Complain about attempts to re-enter an audit.
+      if (BeginLoc.isValid()) {
+        // FIXME: Need our own error.
+        PP.Diag(Loc, diag::err_pp_double_begin_of_assume_nonnull);
+        PP.Diag(BeginLoc, diag::note_pragma_entered_here);
+      }
+      NewLoc = Loc;
+
+      if (Callbacks)
+        Callbacks->PragmaAssumeFunctionEffectsBegin(EffectAttributes, NewLoc);
+    } else {
+      // Complain about attempts to leave an audit that doesn't exist.
+      if (!BeginLoc.isValid()) {
+        // TODO: Need our own diag
+        PP.Diag(Loc, diag::err_pp_unmatched_end_of_assume_nonnull);
+        return;
+      }
+      NewLoc = SourceLocation();
+
+      if (Callbacks)
+        Callbacks->PragmaAssumeFunctionEffectsEnd(NewLoc);
+    }
+
+    PP.setPragmaAssumeFunctionEffectsInfo(EffectAttributes, NewLoc);
+  }
+};
+
 /// Handle "\#pragma region [...]"
 ///
 /// The syntax is
@@ -2166,6 +2247,7 @@ void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler("clang", new PragmaDiagnosticHandler("clang"));
   AddPragmaHandler("clang", new PragmaARCCFCodeAuditedHandler());
   AddPragmaHandler("clang", new PragmaAssumeNonNullHandler());
+  AddPragmaHandler("clang", new PragmaAssumeFunctionEffectsHandler());
   AddPragmaHandler("clang", new PragmaDeprecatedHandler());
   AddPragmaHandler("clang", new PragmaRestrictExpansionHandler());
   AddPragmaHandler("clang", new PragmaFinalHandler());

@@ -334,6 +334,14 @@ public:
   /// is read.
   virtual void PragmaAssumeNonNullEnd(SourceLocation Loc) {}
 
+  /// Callback invoked when a \#pragma clang assume_function_effects begin
+  /// directive is read.
+  virtual void PragmaAssumeFunctionEffectsBegin(ArrayRef<StringRef> Attrs, SourceLocation Loc) {}
+
+  /// Callback invoked when a \#pragma clang assume_function_effects end directive
+  /// is read.
+  virtual void PragmaAssumeFunctionEffectsEnd(SourceLocation Loc) {}
+
   /// Called by Preprocessor::HandleMacroExpandedIdentifier when a
   /// macro invocation is found.
   virtual void MacroExpands(const Token &MacroNameTok,

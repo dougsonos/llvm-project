@@ -2279,7 +2279,17 @@ Preprocessor::ImportAction Preprocessor::HandleHeaderIncludeOrImport(
 
     // Immediately leave the pragma.
     PragmaAssumeNonNullLoc = SourceLocation();
-  }
+  } 
+
+  // Complain about attempts to #include files in an assume-function-effects pragma.
+  if (PragmaAssumeFunctionEffectsInfo.second.isValid()) {
+    // FIXME: make a new diag.
+    Diag(StartLoc, diag::err_pp_include_in_assume_nonnull) << IsImportDecl;
+    Diag(PragmaAssumeFunctionEffectsInfo.second, diag::note_pragma_entered_here);
+
+    // Immediately leave the pragma.
+    PragmaAssumeFunctionEffectsInfo = { {}, SourceLocation() };
+  } 
 
   if (HeaderInfo.HasIncludeAliasMap()) {
     // Map the filename with the brackets still attached.  If the name doesn't

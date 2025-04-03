@@ -184,6 +184,9 @@ public:
   void PragmaAssumeNonNullBegin(SourceLocation Loc) override;
   void PragmaAssumeNonNullEnd(SourceLocation Loc) override;
 
+  void PragmaAssumeFunctionEffectsBegin(ArrayRef<StringRef> Attrs, SourceLocation Loc) override;
+  void PragmaAssumeFunctionEffectsEnd(SourceLocation Loc) override;
+
   /// Insert whitespace before emitting the next token.
   ///
   /// @param Tok             Next token to be emitted.
@@ -749,6 +752,19 @@ void PrintPPOutputPPCallbacks::
 PragmaAssumeNonNullEnd(SourceLocation Loc) {
   MoveToLine(Loc, /*RequireStartOfLine=*/true);
   *OS << "#pragma clang assume_nonnull end";
+  setEmittedDirectiveOnThisLine();
+}
+
+void PrintPPOutputPPCallbacks::PragmaAssumeFunctionEffectsBegin(ArrayRef<StringRef> Attrs, SourceLocation Loc) {
+  MoveToLine(Loc, /*RequireStartOfLine=*/true);
+  // TODO: print the attribute names.
+  *OS << "#pragma clang assume_function_effects xxxxxxxx begin";
+  setEmittedDirectiveOnThisLine();
+}
+
+void PrintPPOutputPPCallbacks::PragmaAssumeFunctionEffectsEnd(SourceLocation Loc) {
+  MoveToLine(Loc, /*RequireStartOfLine=*/true);
+  *OS << "#pragma clang assume_function_effects end";
   setEmittedDirectiveOnThisLine();
 }
 

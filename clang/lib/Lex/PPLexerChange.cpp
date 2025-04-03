@@ -434,6 +434,20 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     PragmaAssumeNonNullLoc = SourceLocation();
   }
 
+  // Complain about reaching a true EOF within assume_function_effects.
+  // We don't want to complain about reaching the end of a macro
+  // instantiation or a _Pragma.
+  if (PragmaAssumeFunctionEffectsInfo.second.isValid() && !isEndOfMacro &&
+      !(CurLexer && CurLexer->Is_PragmaLexer)) {
+    // FIXME: Use a custom diagnostic.
+    Diag(PragmaAssumeFunctionEffectsInfo.second,
+         diag::err_pp_eof_in_arc_cf_code_audited);
+
+    // Recover by leaving immediately.
+    PragmaAssumeFunctionEffectsInfo = { {}, SourceLocation()};
+  }
+
+
   bool LeavingPCHThroughHeader = false;
 
   // If this is a #include'd file, pop it off the include stack and continue
